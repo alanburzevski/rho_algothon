@@ -1,0 +1,40 @@
+---
+title: "asdf"
+author: '480344766'
+date: "05/07/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggplot2)
+```
+
+
+```{r}
+
+data = t(read.table("./algothon21/prices250.txt")) %>% as.data.frame()
+colnames(data) = paste0("t", 1:ncol(data))
+data = data %>% mutate(instrument = paste0("instrument", 1:nrow(data)))
+
+data_long = pivot_longer(data, cols = "t1":"t250", names_to = "time", values_to = "price")
+```
+
+```{r}
+
+p1 = ggplot(data_long) +
+  aes(x = time, y = price, group = instrument, colour = instrument) +
+  geom_line() +
+  labs(x = "Time", y = "Price") +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+p1
+
+# ggsave("summary_plot.jpg", p1, height = 7, width = 15)
+```
+
