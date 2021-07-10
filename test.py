@@ -5,3 +5,4 @@
 
 print("Hello World!")
 print("I love ARIMA")
+print("I love money")
