@@ -42,6 +42,8 @@ def initialPos (prcSoFar):
 
 # mooooore helpers
 # Reads in first 250 days' data into numpy array givenPrices
+# Input: N/A
+# Output: matrix of price history from training data
 def readTraining ():
     f = open("prices250.txt", "r")
     givenPrices = []
@@ -53,11 +55,29 @@ def readTraining ():
     return givenPrices
 
 # Given the price history, output the excess returns matrix
+# Input: givenPrices (price history)
+# Output: matrix of excess returns; excessReturns[i-1][j-1] = excess returns of instrument j on day i
 def excessReturns (givenPrices):
-    pass
+    excessReturns = []
+    # get the required matrices for further computation
+    pChange = dailyPChange(givenPrices)
+    measures = returnMeasures(pChange)
+
+    for inst in range(nInst):
+        instExcess = np.zeros(nDays) 
+        instPChange = (pChange.T)[inst]
+        for i in range (1, nDays):
+            instExcess[i] = instPChange[i] - measures[0][inst]
+        excessReturns.append(instExcess)
+
+    excessReturns = np.array(excessReturns)
+    print(excessReturns.T.shape)
+    return excessReturns.T
+
 
 # Given the price history, output daily percentage price change matrix
-# Sorry for bad code I am noob at python
+# Input: givenPrices (price history)
+# Output: matrix of daily percentage change; dailyPChange[i-1][j-1] = percentage change of instrument j between days i and i-1
 def dailyPChange (givenPrices):
     pChange = []
     # loop through each instrument
@@ -70,11 +90,19 @@ def dailyPChange (givenPrices):
     # print(pChange.T.shape)
     return pChange.T
 
+# Given the daily price changes, output the avg. daily return, SD, variance for each instrument
+def returnMeasures (pChange):
+    measures = np.zeros((3, nInst))
+    measures[0] = [np.average(inst) for inst in pChange.T]
+    measures[1] = [np.std(inst, ddof=1) for inst in pChange.T]
+    measures[2] = [np.var(inst, ddof=1) for inst in pChange.T]
+    return measures
+
 # TEST CODE
 ##########################################################################
 givenPrices = readTraining()
-print(dailyPChange(givenPrices))
 
+print(excessReturns(givenPrices))
 # how to separate by spaces and put everything into a matrix
 
 
