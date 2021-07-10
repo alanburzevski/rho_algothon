@@ -10,12 +10,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(ggplot2)
+library(plotly)
 ```
 
 
 ```{r}
 
-data = t(read.table("./algothon21/prices250.txt")) %>% as.data.frame()
+data = t(read.table("./prices250.txt")) %>% as.data.frame()
 colnames(data) = paste0("t", 1:ncol(data))
 data = data %>% mutate(instrument = paste0("instrument", 1:nrow(data)))
 
@@ -33,8 +34,26 @@ p1 = ggplot(data_long) +
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank())
 
-p1
+plotly::ggplotly(p1)
 
-# ggsave("summary_plot.jpg", p1, height = 7, width = 15)
+# ggsave("figures/summary_plot.jpg", p1, height = 7, width = 15)
 ```
+
+```{r instrument 27}
+
+p2 = ggplot(data_long %>% filter(instrument == "instrument27")) +
+  aes(x = time, y = price, group = instrument, colour = instrument) +
+  geom_line() +
+  labs(x = "Time", y = "Price") +
+  ylim(10, 20) +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+p2
+
+# ggsave("figures/instrument27.jpg", p2, height = 7, width = 15)
+```
+
 
