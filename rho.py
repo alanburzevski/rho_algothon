@@ -4,7 +4,10 @@
 
 import numpy as np
 
-nInst=100
+# global constants / variables
+nTrainDays = 250
+nInst = 100
+
 currentPos = np.zeros(nInst)
 
 # Dummy algorithm to demonstrate function format.
@@ -22,6 +25,8 @@ def getMyPosition (prcSoFar):
     # Position = number of shares, and can be positve or negative depending on long/short position.
     return currentPos
 
+
+
 # Helper functions
 
 # Function to determine the starting position
@@ -31,4 +36,20 @@ def initialPos (prcSoFar):
     # TODO: return optimal portfolio obtained from training data + predictions
     return 0
 
+def readTraining ():
+    f = open("prices250.txt", "r")
+    trainPriceHistory = []
+    for line in f:
+        row = [float(num) for num in line.split()]
+        trainPriceHistory.append(row)
+    trainPriceHistory = np.array(trainPriceHistory)
+    print(trainPriceHistory.shape)
+    return trainPriceHistory
 
+# TEST CODE
+##########################################################################
+print(readTraining())
+# how to separate by spaces and put everything into a matrix
+
+
+##########################################################################
