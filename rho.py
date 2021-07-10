@@ -54,6 +54,29 @@ def readTraining ():
     # print(givenPrices.shape)
     return givenPrices
 
+# Given the price history, output daily percentage price change matrix
+# Input: givenPrices (price history)
+# Output: matrix of daily percentage change; dailyPChange[i-1][j-1] = percentage change of instrument j between days i and i-1
+def dailyPChange (givenPrices):
+    pChange = []
+    # loop through each instrument
+    for inst in givenPrices.T:
+        pChangeInst = np.zeros(nDays)
+        for day in range(1, nDays):
+            pChangeInst[day] = np.log(inst[day] / inst[day - 1])
+        pChange.append(pChangeInst)
+    pChange = np.array(pChange)
+    # print(pChange.T.shape)
+    return pChange.T
+
+# Given the daily price changes, output the avg. daily return, SD, variance for each instrument
+def returnMeasures (pChange):
+    measures = np.zeros((3, nInst))
+    measures[0] = [np.average(inst) for inst in pChange.T]
+    measures[1] = [np.std(inst, ddof=1) for inst in pChange.T]
+    measures[2] = [np.var(inst, ddof=1) for inst in pChange.T]
+    return measures
+
 # Given the price history, output the excess returns matrix
 # Input: givenPrices (price history)
 # Output: matrix of excess returns; excessReturns[i-1][j-1] = excess returns of instrument j on day i
@@ -73,30 +96,6 @@ def excessReturns (givenPrices):
     excessReturns = np.array(excessReturns)
     print(excessReturns.T.shape)
     return excessReturns.T
-
-
-# Given the price history, output daily percentage price change matrix
-# Input: givenPrices (price history)
-# Output: matrix of daily percentage change; dailyPChange[i-1][j-1] = percentage change of instrument j between days i and i-1
-def dailyPChange (givenPrices):
-    pChange = []
-    # loop through each instrument
-    for inst in givenPrices.T:
-        pChangeInst = np.zeros(nDays)
-        for day in range(1, nDays):
-            pChangeInst[day] = inst[day] / inst[day - 1] - 1
-        pChange.append(pChangeInst)
-    pChange = np.array(pChange)
-    # print(pChange.T.shape)
-    return pChange.T
-
-# Given the daily price changes, output the avg. daily return, SD, variance for each instrument
-def returnMeasures (pChange):
-    measures = np.zeros((3, nInst))
-    measures[0] = [np.average(inst) for inst in pChange.T]
-    measures[1] = [np.std(inst, ddof=1) for inst in pChange.T]
-    measures[2] = [np.var(inst, ddof=1) for inst in pChange.T]
-    return measures
 
 # TEST CODE
 ##########################################################################
