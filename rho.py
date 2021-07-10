@@ -57,7 +57,7 @@ def excessReturns (givenPrices):
     pass
 
 # Given the price history, output daily percentage price change matrix
-# 
+# Sorry for bad code I am noob at python
 def dailyPChange (givenPrices):
     pChange = []
     # loop through each instrument
@@ -67,8 +67,7 @@ def dailyPChange (givenPrices):
             pChangeInst[day] = inst[day] / inst[day - 1] - 1
         pChange.append(pChangeInst)
     pChange = np.array(pChange)
-    print(pChange.T.shape)
-    
+    # print(pChange.T.shape)
     return pChange.T
 
 # TEST CODE
