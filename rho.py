@@ -5,7 +5,7 @@
 import numpy as np
 
 # global constants / variables
-nTrainDays = 250
+nDays = 250
 nInst = 100
 
 currentPos = np.zeros(nInst)
@@ -14,6 +14,9 @@ currentPos = np.zeros(nInst)
 def getMyPosition (prcSoFar):
     global currentPos
     (nins,nt) = prcSoFar.shape
+
+    # Important Variables
+    givenPrices = readTraining()
 
     # Day 1, set initial positions?
     if nt == 1:
@@ -36,19 +39,43 @@ def initialPos (prcSoFar):
     # TODO: return optimal portfolio obtained from training data + predictions
     return 0
 
+
+# mooooore helpers
+# Reads in first 250 days' data into numpy array givenPrices
 def readTraining ():
     f = open("prices250.txt", "r")
-    trainPriceHistory = []
+    givenPrices = []
     for line in f:
         row = [float(num) for num in line.split()]
-        trainPriceHistory.append(row)
-    trainPriceHistory = np.array(trainPriceHistory)
-    print(trainPriceHistory.shape)
-    return trainPriceHistory
+        givenPrices.append(row)
+    givenPrices = np.array(givenPrices)
+    # print(givenPrices.shape)
+    return givenPrices
+
+# Given the price history, output the excess returns matrix
+def excessReturns (givenPrices):
+    pass
+
+# Given the price history, output daily percentage price change matrix
+# 
+def dailyPChange (givenPrices):
+    pChange = []
+    # loop through each instrument
+    for inst in givenPrices.T:
+        pChangeInst = np.zeros(nDays)
+        for day in range(1, nDays):
+            pChangeInst[day] = inst[day] / inst[day - 1] - 1
+        pChange.append(pChangeInst)
+    pChange = np.array(pChange)
+    print(pChange.T.shape)
+    
+    return pChange.T
 
 # TEST CODE
 ##########################################################################
-print(readTraining())
+givenPrices = readTraining()
+print(dailyPChange(givenPrices))
+
 # how to separate by spaces and put everything into a matrix
 
 
