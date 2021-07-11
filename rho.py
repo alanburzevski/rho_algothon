@@ -129,13 +129,13 @@ def getWeights(returns, inverseSigma, targetReturn):
     weights = weightsTerm1 + weightsTerm2
     return(weights)
 
-excessReturns(readTraining())
-
 # TEST CODE
 ##########################################################################
 givenPrices = readTraining()
-
-print(excessReturns(givenPrices))
+returns = returnMeasures(dailyReturns(givenPrices))[0]*250
+inverseSigma = np.linalg.inv(sigma(varCov(excessReturns(givenPrices))))
+targetReturn = 0.05
+print(getWeights(returns, sigma, targetReturn))
 # how to separate by spaces and put everything into a matrix
 
 
