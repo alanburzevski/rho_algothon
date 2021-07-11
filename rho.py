@@ -113,8 +113,8 @@ def sigma (varCovMat):
     return sigmaMat
 
 # Calculate weights
-# Input: 
-# Output: weights
+# Input: average returns, inverse scaled variance covariance matrix, and target returns
+# Output: weights for optimal portfolio given target returns
 def getWeights(returns, inverseSigma, targetReturn):
     ones = np.ones(nInst)
     A = np.matmul(np.matmul(ones, inverseSigma), ones.T)
