@@ -115,17 +115,17 @@ def sigma (varCovMat):
 # Calculate weights
 # Input: 
 # Output: weights
-def getWeights(returns, sigma, targetReturn):
+def getWeights(returns, inverseSigma, targetReturn):
     ones = np.ones(nInst)
-    A = np.matmul(np.matmul(ones, np.linalg.inv(sigma)), ones.T)
-    B = np.matmul(np.matmul(ones, np.linalg.inv(sigma)), returns.T)
-    C = np.matmul(np.matmul(returns, np.linalg.inv(sigma)), returns.T)
+    A = np.matmul(np.matmul(ones, inverseSigma), ones.T)
+    B = np.matmul(np.matmul(ones, inverseSigma), returns.T)
+    C = np.matmul(np.matmul(returns, inverseSigma), returns.T)
     delta = A * C - B**2
     lam = (C - targetReturn*B)/delta
     gam = (targetReturn*A - B)/delta
 
-    weightsTerm1 = lam * np.matmul(np.linalg.inv(sigma), ones.T)
-    weightsTerm2 = gam * np.matmul(np.linalg.inv(sigma), returns.T)
+    weightsTerm1 = lam * np.matmul(inverseSigma, ones.T)
+    weightsTerm2 = gam * np.matmul(inverseSigma, returns.T)
     weights = weightsTerm1 + weightsTerm2
     return(weights)
 
