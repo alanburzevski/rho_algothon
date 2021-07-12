@@ -129,6 +129,40 @@ def getWeights(returns, inverseSigma, targetReturn):
     weights = weightsTerm1 + weightsTerm2
     return(weights)
 
+# Get holdings from short term trading
+# Input: historical data from individual instruments, parameters for ARIMA, window to trade, previous instrument position
+# Output: recommended position
+def shortTermTrading(instrumentData, params, days, prevPosition):
+    
+    # Fitting ARIMA and predicting specified number of days
+    arimaModel = ARIMA(instrumentData, order = params)
+    arimaModelFit = arimaModel.fit()
+    predictions = arimaModelFit.forecast(steps = days)
+
+    # Only looking at observations within specified window
+    instrumentDataWindow = instrumentData.iloc[0:days, :]
+    
+    # Obtaining prices and days within window with minimum and maximum days
+    priceMin = [x == min(predictions) for x in predictions]
+    priceMax = [x == max(predictions) for x in predictions]
+    days = [x for x in range(0, days, 1)]
+    dayMin = list(itertools.compress(days, priceMin))[0]
+    dayMax = list(itertools.compress(days, priceMax))[0]
+
+    # Obtaining lists of minimum and maximum days, prices, and non-minimum or maximum days
+    minMaxDays = [dayMin, dayMax]
+    minMaxPrice = list(instrumentDataWindow.iloc[minMaxDays, 0])
+    otherDays = np.setdiff1d(days, minMaxDays)
+
+    # Obtaining position
+    position = np.full(shape = (10, 1), fill_value = prevPosition[-1]) # initial position all 0
+    position[minMaxDays[0]] = -5000/minMaxPrice[0]
+    position[minMaxDays[1]] = 5000/minMaxPrice[1]
+    for i in otherDays: # all other days reflect previous day's position
+        position[i] = position[i-1]
+
+    return position
+
 # TEST CODE
 ##########################################################################
 givenPrices = readTraining()
