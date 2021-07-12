@@ -3,6 +3,9 @@
 # this file contains the implementation of our team's getMyPosition function
 
 import numpy as np
+import itertools
+
+from statsmodels.tsa.arima.model import ARIMA
 
 # global constants / variables
 nDays = 250
