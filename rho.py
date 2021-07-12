@@ -44,43 +44,18 @@ def initialPos (prcSoFar):
 # Reads in first 250 days' data into numpy array givenPrices
 # Input: N/A
 # Output: matrix of price history from training data
-def readTraining (): # Syntax is def then colon then indentation 
+def readTraining ():
     f = open("prices250.txt", "r")
-    givenPrices = [] # Empty list
-    for line in f: # It will know you mean for each line in text file (i.e. each row)
-        # For each line in f, looping through all lines from start to the end 
-        row = [float(num) for num in line.split()] # Float: convert to decimal numbers
-        # Putting each element into a list
-        givenPrices.append(row) # Append = adding each row to this list
-        # Getting a list of lists
+    givenPrices = []
+    for line in f:
+        row = [float(num) for num in line.split()]
+        givenPrices.append(row)
     givenPrices = np.array(givenPrices)
     # print(givenPrices.shape)
-    return givenPrices 
+    return givenPrices
 
 # Given the price history, output daily percentage price change matrix
 # Input: givenPrices (price history)
-<<<<<<< HEAD
-# Output: matrix of daily percentage change; dailyPChange[i-1][j-1] = percentage change of instrument j between days i and i-1
-def dailyPChange (givenPrices): # Define it to need this argument
-    pChange = []
-    # loop through each instrument
-    for inst in givenPrices.T:
-        pChangeInst = np.zeros(nDays) # Need to change this since don't use 1st row
-        for day in range(1, nDays): # From 1 to n days
-            pChangeInst[day] = np.log(inst[day] / inst[day - 1])
-        pChange.append(pChangeInst)
-    pChange = np.array(pChange)
-    # print(pChange.T.shape)
-    return pChange.T
-
-# Given the daily price changes, output the avg. daily return, SD, variance for each instrument
-def returnMeasures (pChange):
-    measures = np.zeros((3, nInst))
-    measures[0] = [np.average(inst) for inst in pChange.T]
-    measures[1] = [np.std(inst, ddof=1) for inst in pChange.T]
-    measures[2] = [np.var(inst, ddof=1) for inst in pChange.T]
-    # Do something to inst for each inst
-=======
 # Output: matrix of daily percentage change; dailyReturns[i-1][j-1] = percentage change of instrument j between days i and i-1
 def dailyReturns (givenPrices):
     logChange = []
@@ -101,7 +76,6 @@ def returnMeasures (dailyReturns):
     measures[0] = [np.average(inst) for inst in dailyReturns.T]
     measures[1] = [np.std(inst, ddof=1) for inst in dailyReturns.T]
     measures[2] = [np.var(inst, ddof=1) for inst in dailyReturns.T]
->>>>>>> 0631b208d81d88919644544237f3c2267fcd7f7a
     return measures
 
 # Given the price history, output the excess returns matrix
