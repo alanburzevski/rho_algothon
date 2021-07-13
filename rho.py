@@ -57,6 +57,12 @@ def readTraining ():
     # print(givenPrices.shape)
     return givenPrices
 
+
+
+# Long Term Trading Stratgey
+##########################################################################
+
+
 # Given the price history, output daily percentage price change matrix
 # Input: givenPrices (price history)
 # Output: matrix of daily percentage change; dailyReturns[i-1][j-1] = percentage change of instrument j between days i and i-1
@@ -132,6 +138,29 @@ def getWeights(returns, inverseSigma, targetReturn):
     weights = weightsTerm1 + weightsTerm2
     return(weights)
 
+def minmaxTransform(OldValue, NewMin, NewMax):
+    OldMax = max(OldValue)
+    OldMin = min(OldValue)
+
+    newValue = np.zeros(len(OldValue))
+    for index, value in enumerate(OldValue):
+        newValue[index] = (((value - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
+
+    return newValue
+
+def longTermTrading(weights, window, curPrices):
+    transformWeights = minmaxTransform(weights, -1, 1)
+    longHoldingsDol = transformWeights*5000
+    longHoldings = round(longHoldingsDol/curPrices)
+
+    return longHoldings
+
+
+
+# Short Term Trading Stratgey
+##########################################################################
+
+
 # Get holdings from short term trading
 # Input: historical data from individual instruments, parameters for ARIMA, window to trade, previous instrument position
 # Output: recommended position
@@ -165,6 +194,8 @@ def shortTermTrading(instrumentData, params, days, prevPosition):
         position[i] = position[i-1]
 
     return position
+
+
 
 # TEST CODE
 ##########################################################################
