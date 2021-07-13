@@ -3,6 +3,7 @@
 # this file contains the implementation of our team's getMyPosition function
 
 import numpy as np
+from numpy.core.fromnumeric import shape
 import pandas as pd
 import itertools
 from statsmodels.tsa.arima.model import ARIMA
@@ -12,8 +13,8 @@ nDays = 250
 nInst = 100
 
 # flexible variables
-window = 25
-targetReturn = 0.1
+window = 5
+targetReturn = 5
 
 currentPos = np.zeros(nInst)
 
@@ -33,17 +34,20 @@ def getMyPosition (prcSoFar):
     givenPrices = readTraining()
     # append prcSoFar to givenPrices
     # fullPrcSoFar.shape =(100, 250 + nt)
-    fullPrcSoFar = np.concatenate((givenPrices.T, prcSoFar), axis=0)
+    #print(givenPrices.shape)
+    #print(prcSoFar.shape)
+    fullPrcSoFar = np.concatenate((givenPrices, prcSoFar.T), axis=0)
     # pls work
 
     # Every 25 days, call longTermTrading(...) and store the next 25 rows into PosHistory
-    if fullPrcSoFar.shape[1] % 25 == 1:
+    if fullPrcSoFar.shape[0] % 25 == 1:
         returns = returnMeasures(dailyReturns(givenPrices))[0]*250
         inverseSigma = np.linalg.inv(sigma(varCov(excessReturns(givenPrices))))
-
+        
         weights = getWeights(returns, inverseSigma, targetReturn)
+        #print(weights)
         longPositions = longTermTrading(weights, window, prcSoFar[:, -1])
-
+        #print(longPositions)
         # update PosHistory
         start = nt - 1
         for day in range(25):
@@ -53,6 +57,7 @@ def getMyPosition (prcSoFar):
     
     else:
         longPositions = PosHistory[nt - 1]
+        print(fullPrcSoFar.shape)
 
     # Get shortPositions (short term strategy) 
 
@@ -66,7 +71,9 @@ def getMyPosition (prcSoFar):
 
     # The algorithm must return a vector of integers, indicating the position of each stock.
     # Position = number of shares, and can be positve or negative depending on long/short position.
-    return currentPos
+    #k = np.full(shape=(100,1), fill_value = 1000)
+    #[1000 for i in range(100)]
+    return longPositions
 
 
 
@@ -131,7 +138,7 @@ def dailyReturns (givenPrices):
     logChange = []
     # loop through each instrument
     for inst in givenPrices.T:
-        logChangeInst = np.empty((nDays, 1))
+        logChangeInst = np.zeros((nDays, 1))
         # logChangeInst = np.zeros(nDays)
         for day in range(0, nDays - 1):
             logChangeInst[day] = np.log(inst[day + 1] / inst[day])
@@ -142,7 +149,7 @@ def dailyReturns (givenPrices):
 
 # Given the daily price changes, output the avg. daily return, SD, variance for each instrument
 def returnMeasures (dailyReturns):
-    measures = np.empty((3, nInst))
+    measures = np.zeros((3, nInst))
     measures[0] = [np.average(inst) for inst in dailyReturns.T]
     measures[1] = [np.std(inst, ddof=1) for inst in dailyReturns.T]
     measures[2] = [np.var(inst, ddof=1) for inst in dailyReturns.T]
@@ -158,14 +165,14 @@ def excessReturns (givenPrices):
     measures = returnMeasures(Returns)
 
     for inst in range(nInst):
-        instExcess = np.empty(nDays - 1) 
+        instExcess = np.zeros(nDays - 1) 
         instReturns = (Returns.T)[inst]
         for i in range (0, nDays - 1):
             instExcess[i] = instReturns[i] - measures[0][inst]
         excessReturns.append(instExcess)
 
     excessReturns = np.array(excessReturns)
-    print(excessReturns.T.shape)
+    #print(excessReturns.T.shape)
     return excessReturns.T
 
 # Calculate the variance covariance matrix
@@ -187,8 +194,12 @@ def sigma (varCovMat):
 # Output: weights for optimal portfolio given target returns
 def getWeights(returns, inverseSigma, targetReturn):
     ones = np.ones(nInst)
-    A = np.matmul(np.matmul(ones, inverseSigma), ones.T)
-    B = np.matmul(np.matmul(ones, inverseSigma), returns.T)
+    print(ones.shape)
+    print("ones has", np.size(ones), " elements")   
+    print(inverseSigma.shape)
+    print("inverse sigma has", np.size(inverseSigma), " element")    
+    A = np.matmul(np.matmul(ones.T, inverseSigma), ones.T)
+    B = np.matmul(np.matmul(ones.T, inverseSigma), returns.T)
     C = np.matmul(np.matmul(returns, inverseSigma), returns.T)
     delta = A * C - B**2
     lam = (C - targetReturn*B)/delta
@@ -213,8 +224,8 @@ def minmaxTransform(OldValue, NewMin, NewMax):
 # dollar amounts of holdings for each stock (long term)
 def longTermTrading(weights, window, curPrices):
     transformWeights = minmaxTransform(weights, -1, 1)
-    longHoldingsDol = transformWeights*5000
-    longHoldings = round(longHoldingsDol/curPrices)
+    longHoldingsDol = transformWeights*10000
+    longHoldings = np.ndarray.round(longHoldingsDol/curPrices)
 
     return longHoldings
 
@@ -267,7 +278,7 @@ def shortTermTrading(instrumentData, params, window, prevPosition):
 # Output: An array of final holdings
 def shortTermTradingFinal():
     
-    finalPosition = np.empty(shape = (25, 0))
+    finalPosition = np.zeros(shape = (25, 0))
     formattedData = getFormattedData()
 
     for i in range(1, 101, 1):
@@ -285,14 +296,14 @@ def shortTermTradingFinal():
     return finalPosition
 
 
-# TEST CODE
-##########################################################################
-givenPrices = readTraining()
-returns = returnMeasures(dailyReturns(givenPrices))[0]*250
-inverseSigma = np.linalg.inv(sigma(varCov(excessReturns(givenPrices))))
-targetReturn = 0.05
-print(getWeights(returns, sigma, targetReturn))
-# how to separate by spaces and put everything into a matrix
+# # TEST CODE
+# ##########################################################################
+# givenPrices = readTraining()
+# returns = returnMeasures(dailyReturns(givenPrices))[0]*250
+# inverseSigma = np.linalg.inv(sigma(varCov(excessReturns(givenPrices))))
+# targetReturn = 0.05
+# print(getWeights(returns, inverseSigma, targetReturn))
+# # how to separate by spaces and put everything into a matrix
 
 
 ##########################################################################
