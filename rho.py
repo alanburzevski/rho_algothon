@@ -3,6 +3,7 @@
 # this file contains the implementation of our team's getMyPosition function
 
 import numpy as np
+import pandas as pd
 import itertools
 
 from statsmodels.tsa.arima.model import ARIMA
@@ -57,6 +58,27 @@ def readTraining ():
     # print(givenPrices.shape)
     return givenPrices
 
+
+# Get formatted data (necessary for ARIMA)
+# Input: N/A
+# Output: Pandas dataframe of formatted data
+def getFormattedData():
+    ## Reading data
+    dataRaw = pd.read_csv('prices250.txt', delimiter = '\s+', header = None).T
+
+    ## Adding column names (for each timepoint)
+    dataRaw.columns = ['price' + str(x) for x in range(1, dataRaw.shape[1]+1, 1)]
+
+    ## Adding column representing which instrument
+    dataRaw['instrument'] = ['instrument' + str(x) for x in range(1, dataRaw.shape[0]+1, 1)]
+
+    ## Converting to long format
+    data = pd.wide_to_long(dataRaw, stubnames = 'price', i = 'instrument', j = 'time')
+    data['instrument'] = [x[0] for x in data.index]
+    data['time'] = [x[1] for x in data.index]
+    data.reset_index(drop = True, inplace = True)
+
+    return data
 
 
 # Long Term Trading Stratgey
@@ -164,37 +186,62 @@ def longTermTrading(weights, window, curPrices):
 # Get holdings from short term trading
 # Input: historical data from individual instruments, parameters for ARIMA, window to trade, previous instrument position
 # Output: recommended position
-def shortTermTrading(instrumentData, params, days, prevPosition):
+def shortTermTrading(instrumentData, params, window, prevPosition):
     
     # Fitting ARIMA and predicting specified number of days
     arimaModel = ARIMA(instrumentData, order = params)
     arimaModelFit = arimaModel.fit()
-    predictions = arimaModelFit.forecast(steps = days)
-
-    # Only looking at observations within specified window
-    instrumentDataWindow = instrumentData.iloc[0:days, :]
+    predictions = arimaModelFit.forecast(steps = window)
     
     # Obtaining prices and days within window with minimum and maximum days
-    priceMin = [x == min(predictions) for x in predictions]
-    priceMax = [x == max(predictions) for x in predictions]
-    days = [x for x in range(0, days, 1)]
-    dayMin = list(itertools.compress(days, priceMin))[0]
-    dayMax = list(itertools.compress(days, priceMax))[0]
+    predictionsList = [x for x in predictions]
+    dayMinBool = [x == min(predictions) for x in predictions]
+    dayMaxBool = [x == max(predictions) for x in predictions]
+    days = [x for x in range(0, window, 1)]
+    dayMin = list(itertools.compress(days, dayMinBool))[0]
+    dayMax = list(itertools.compress(days, dayMaxBool))[0]
+    priceMin = list(itertools.compress(predictionsList, dayMinBool))[0]
+    priceMax = list(itertools.compress(predictionsList, dayMaxBool))[0]
 
     # Obtaining lists of minimum and maximum days, prices, and non-minimum or maximum days
     minMaxDays = [dayMin, dayMax]
-    minMaxPrice = list(instrumentDataWindow.iloc[minMaxDays, 0])
+    minMaxPrice = [priceMin, priceMax]
     otherDays = np.setdiff1d(days, minMaxDays)
 
     # Obtaining position
-    position = np.full(shape = (10, 1), fill_value = prevPosition[-1]) # initial position all 0
-    position[minMaxDays[0]] = -5000/minMaxPrice[0]
-    position[minMaxDays[1]] = 5000/minMaxPrice[1]
+    position = np.full(shape = (window, 1), fill_value = prevPosition[-1]) # initial position all 0
+    position[minMaxDays[0]] = np.floor(5000/minMaxPrice[1])
+    position[minMaxDays[1]] = np.ceil(-5000/minMaxPrice[0])
+    
     for i in otherDays: # all other days reflect previous day's position
-        position[i] = position[i-1]
+        try:
+            position[i] = position[i-1]
+        except:
+            pass
 
     return position
 
+# Iteratively obtain holdings
+# Input: N/A
+# Output: An array of final holdings
+def shortTermTradingFinal():
+    
+    finalPosition = np.empty(shape = (25, 0))
+    formattedData = getFormattedData()
+
+    for i in range(1, 101, 1):
+        instrumentData = formattedData[formattedData['instrument'] == str("instrument" + str(i))]
+        position = np.zeros(shape = (1,1))
+        i = 1
+        
+        while i <= 10:
+            newPosition = shortTermTrading(instrumentData = instrumentData, params = (20, 2, 0), window = 25, prevPosition = position)
+            position = np.concatenate((position, newPosition), axis=0)
+            i = i+1
+
+        finalPosition = np.concatenate((finalPosition, position[1:]), axis = 1) # Removing the first 0
+
+    return finalPosition
 
 
 # TEST CODE
