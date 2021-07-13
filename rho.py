@@ -5,29 +5,65 @@
 import numpy as np
 import pandas as pd
 import itertools
-
 from statsmodels.tsa.arima.model import ARIMA
 
 # global constants / variables
 nDays = 250
 nInst = 100
 
+# flexible variables
+window = 25
+targetReturn = 0.1
+
 currentPos = np.zeros(nInst)
 
-# Dummy algorithm to demonstrate function format.
+# keeps track of past positions
+PosHistory = np.zeros((nDays, nInst))
+# long term strategy position on day 251 for instrument i stored in
+# PosHistory[0][i]
+
+
+# function to fill
 def getMyPosition (prcSoFar):
     global currentPos
     (nins,nt) = prcSoFar.shape
+    # 100 rows by (nt days since day 251) columns
 
     # Important Variables
     givenPrices = readTraining()
+    # append prcSoFar to givenPrices
+    # fullPrcSoFar.shape =(100, 250 + nt)
+    fullPrcSoFar = np.concatenate((givenPrices.T, prcSoFar), axis=0)
+    # pls work
 
-    # Day 1, set initial positions?
-    if nt == 1:
-        return initialPos(prcSoFar)
+    # Every 25 days, call longTermTrading(...) and store the next 25 rows into PosHistory
+    if fullPrcSoFar.shape[1] % 25 == 1:
+        returns = returnMeasures(dailyReturns(givenPrices))[0]*250
+        inverseSigma = np.linalg.inv(sigma(varCov(excessReturns(givenPrices))))
 
-    rpos = np.array([int(x) for x in 1000 * np.random.randn(nins)])
-    currentPos += rpos
+        weights = getWeights(returns, inverseSigma, targetReturn)
+        longPositions = longTermTrading(weights, window, prcSoFar[:, -1])
+
+        # update PosHistory
+        start = nt - 1
+        for day in range(25):
+            # error check for out of bounds
+            if day + start < nDays: 
+                PosHistory[day + start] = longPositions.T # if error get rid of .T
+    
+    else:
+        longPositions = PosHistory[nt - 1]
+
+    # Get shortPositions (short term strategy) 
+
+
+    # Get currentPos = longPositions + shortPositions
+    # and return this ^^^^^^^^^^^^^^
+
+    # dummy code
+    # rpos = np.array([int(x) for x in 1000 * np.random.randn(nins)])
+    # currentPos += rpos
+
     # The algorithm must return a vector of integers, indicating the position of each stock.
     # Position = number of shares, and can be positve or negative depending on long/short position.
     return currentPos
@@ -49,7 +85,7 @@ def initialPos (prcSoFar):
 # Input: N/A
 # Output: matrix of price history from training data
 def readTraining ():
-    f = open("prices250.txt", "r")
+    f = open("./prices250.txt", "r")
     givenPrices = []
     for line in f:
         row = [float(num) for num in line.split()]
@@ -57,6 +93,8 @@ def readTraining ():
     givenPrices = np.array(givenPrices)
     # print(givenPrices.shape)
     return givenPrices
+
+    # TODO: this returns 100 x 250 matrix
 
 
 # Get formatted data (necessary for ARIMA)
@@ -81,7 +119,8 @@ def getFormattedData():
     return data
 
 
-# Long Term Trading Stratgey
+
+# Long Term Trading Strategy
 ##########################################################################
 
 
@@ -170,6 +209,8 @@ def minmaxTransform(OldValue, NewMin, NewMax):
 
     return newValue
 
+# function takes in the 'weights' for each of the 100 stocks and outputs the 
+# dollar amounts of holdings for each stock (long term)
 def longTermTrading(weights, window, curPrices):
     transformWeights = minmaxTransform(weights, -1, 1)
     longHoldingsDol = transformWeights*5000
