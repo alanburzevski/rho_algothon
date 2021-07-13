@@ -57,7 +57,7 @@ def getMyPosition (prcSoFar):
     
     else:
         longPositions = PosHistory[nt - 1]
-        print(fullPrcSoFar.shape)
+        #print(fullPrcSoFar.shape)
 
     # Get shortPositions (short term strategy) 
 
@@ -194,10 +194,10 @@ def sigma (varCovMat):
 # Output: weights for optimal portfolio given target returns
 def getWeights(returns, inverseSigma, targetReturn):
     ones = np.ones(nInst)
-    print(ones.shape)
-    print("ones has", np.size(ones), " elements")   
-    print(inverseSigma.shape)
-    print("inverse sigma has", np.size(inverseSigma), " element")    
+    #print(ones.shape)
+    #print("ones has", np.size(ones), " elements")   
+    #print(inverseSigma.shape)
+    #print("inverse sigma has", np.size(inverseSigma), " element")    
     A = np.matmul(np.matmul(ones.T, inverseSigma), ones.T)
     B = np.matmul(np.matmul(ones.T, inverseSigma), returns.T)
     C = np.matmul(np.matmul(returns, inverseSigma), returns.T)
